@@ -1,0 +1,51 @@
+# Note that all packages and scripts will be installed/run in their order of appearance.
+# Please look at our documentation page for more information. You can find it at KoalityCode.com/documentation 
+
+# The first section is language definition, where you define which languages and their respective versions your project uses.
+languages:
+  jvm: 1.6
+
+# The setup section allows you to define and describe your testing environment.
+setup:
+# The packages section defines dependencies your project needs.
+- packages:
+
+  # Define system package dependencies here. These are all the packages that you use that are installed by running "apt-get install X"
+  - system:
+    - maven
+
+# This section defines databases used for your tests. They are local to the VMs the tests are run on.
+# Currently, only postgres and mysql are supported. This configuration includes both (you can also set passwords).
+- databases:
+  - mysql:
+    - name: test_db
+      username: test_user
+  - postgres:
+    - name: test_db
+      username: test_user
+
+# In this section you can add shell scripts for any kind of installation operations that you wish to add that were not already covered.
+- scripts:
+
+# The following section defines how to build your code. Each section can be given an arbitrary name.
+compile:
+  # All scripts must return a proper error code (0 for success).
+  scripts:
+  - mvn version:
+      script: mvn --version
+  - mvn compile 0:
+      script: mvn clean package -DskipTests
+
+# The test section is responsible for running tests. All commands from here on will be executed in parallel.
+# Remember not to run any scripts that do batch testing from this point on, since they are not parallelizable.
+test:
+  # Factory scripts that will output test scripts to be run in parallel.
+  factories:
+  - factory .:
+      path: .
+      script:
+      - "find . -name \"*[tT]est*.java\" | sed \"s/.*\\/\\(.*\\).java/\\1/\" | while read java; do echo -e \"- mvn -Dtest=$java test:\n    path: .\"; done"
+
+  # The number of VMs to create to run tests on.
+  machines: 8
+
